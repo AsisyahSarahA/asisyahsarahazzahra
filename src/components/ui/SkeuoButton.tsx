@@ -105,7 +105,7 @@ export function SkeuoButton({
           scale: 0.98,
           transition: { duration: 0.05 },
         },
-    transition: { type: "spring", stiffness: 400, damping: 25 },
+    transition: { type: "spring" as const, stiffness: 400, damping: 25 },
   };
 
   const inner = (

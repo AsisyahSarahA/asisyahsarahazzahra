@@ -14,7 +14,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 
 export const metadata: Metadata = {
-  title: "Asisyah Sarah Azzahra — IT Specialist & Junior Programmer",
+  title: "Asisyah Sarah Azzahra — Full Stack Developer",
   description:
     "Personal portfolio of Asisyah Sarah Azzahra — Management Informatics student at LP3I Tasikmalaya, BNSP-certified Junior Programmer, and IT Support specialist. Specializing in web-based information systems.",
   keywords: [

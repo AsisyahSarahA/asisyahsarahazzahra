@@ -18,7 +18,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
@@ -29,7 +29,7 @@ import { Projects } from "@/components/sections/Projects";
 import { Contact } from "@/components/sections/Contact";
 
 /** Page-level assembly animation — sections stagger in */
-const pageVariants = {
+const pageVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
@@ -39,7 +39,7 @@ const pageVariants = {
   },
 };
 
-const sectionVariants = {
+const sectionVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
