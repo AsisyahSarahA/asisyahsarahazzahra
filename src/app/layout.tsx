@@ -1,37 +1,42 @@
 /**
- * layout.tsx — Root App Layout
- * ─────────────────────────────────────────────────────────
- * - Imports Google Fonts via CSS @import in globals.css
- * - Wraps app with ThemeProvider
- * - Mounts CustomCursor (desktop only, via CSS)
- * - Sets metadata (SEO)
- * ─────────────────────────────────────────────────────────
+ * layout.tsx — Root Layout
+ * Asisyah Sarah Azzahra — "The Woman Behind the Code"
  */
 
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
-import { CustomCursor } from "@/components/ui/CustomCursor";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 export const metadata: Metadata = {
-  title: "Asisyah Sarah Azzahra — Full Stack Developer",
+  title: "Asisyah Sarah Azzahra — Junior Web Developer | Software Developer",
   description:
-    "Personal portfolio of Asisyah Sarah Azzahra — Management Informatics student at LP3I Tasikmalaya, BNSP-certified Junior Programmer, and IT Support specialist. Specializing in web-based information systems.",
+    "A personal portfolio of Asisyah Sarah Azzahra, a Junior Web Developer and Informatics Management student from Indonesia, showcasing web applications, software projects, and digital experiences.",
   keywords: [
     "Asisyah Sarah Azzahra",
-    "IT Specialist",
-    "Junior Programmer",
-    "BNSP",
-    "LP3I Tasikmalaya",
-    "Web Developer",
+    "Junior Web Developer",
+    "Software Developer",
+    "Politeknik LP3I Tasikmalaya",
+    "Manajemen Informatika",
+    "N-PRESENCE",
+    "HAKI",
+    "BNSP Junior Programmer",
+    "Laravel",
+    "Next.js",
+    "React.js",
+    "TypeScript",
+    "Tailwind CSS",
+    "Ciamis",
+    "Women in Tech",
     "Portfolio",
   ],
   authors: [{ name: "Asisyah Sarah Azzahra" }],
   openGraph: {
-    title: "Asisyah Sarah Azzahra — Neo-Glass Portfolio",
+    title: "Asisyah Sarah Azzahra — Junior Web Developer | Software Developer",
     description:
-      "IT Specialist | Junior Programmer | Management Informatics Student",
+      "A personal portfolio of Asisyah Sarah Azzahra, showcasing web applications, software projects, and digital experiences.",
     type: "website",
+    url: "https://asisyahsarahazzahra.vercel.app",
   },
 };
 
@@ -43,7 +48,6 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
-        {/* Preload hint for fonts (loaded via globals.css @import) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -51,12 +55,12 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className="font-body antialiased">
-        <ThemeProvider>
-          {/* Custom cursor — auto-hides on touch via CSS */}
-          <CustomCursor />
-          {children}
-        </ThemeProvider>
+      <body className="font-sans antialiased">
+        <LanguageProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

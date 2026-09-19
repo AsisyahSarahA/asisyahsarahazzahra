@@ -4,8 +4,7 @@
  * ThemeContext.tsx
  * ─────────────────────────────────────────────────────────
  * Robust Dark/Light theme provider.
- * - Reads from localStorage on first mount
- * - Falls back to system `prefers-color-scheme`
+ * - Reads from localStorage / system preference on client mount
  * - Applies `dark` class to <html> for Tailwind dark: variants
  * ─────────────────────────────────────────────────────────
  */
@@ -29,44 +28,41 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = "neo-glass-theme";
+const STORAGE_KEY = "editorial-theme-v2";
 
-/** Reads initial theme: localStorage → system preference → default dark */
+/** Reads initial theme safely — defaults to 'dark' for Obsidian aesthetic */
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
   if (stored === "dark" || stored === "light") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return "dark";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark"); // SSR-safe default
+  const [theme, setTheme] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
-  // After mount, read the real initial theme
+  // Initialize theme on client mount after initial render
   useEffect(() => {
-    setTheme(getInitialTheme());
+    const activeTheme = getInitialTheme();
+    document.documentElement.classList.toggle("dark", activeTheme === "dark");
+    setTheme(activeTheme);
     setMounted(true);
   }, []);
 
-  // Sync theme class to <html> and persist to localStorage
-  useEffect(() => {
-    if (!mounted) return;
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme, mounted]);
-
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setTheme((prevTheme) => {
+      const nextTheme = prevTheme === "dark" ? "light" : "dark";
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      localStorage.setItem(STORAGE_KEY, nextTheme);
+      return nextTheme;
+    });
   }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === "dark" }}>
-      {/* Suppress hydration mismatch by hiding until mounted */}
-      <div style={{ visibility: mounted ? "visible" : "hidden" }}>
+      {/* Suppress hydration mismatch by rendering cleanly */}
+      <div style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.2s ease" }}>
         {children}
       </div>
     </ThemeContext.Provider>

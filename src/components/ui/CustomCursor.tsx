@@ -1,13 +1,8 @@
 "use client";
 
 /**
- * CustomCursor.tsx
- * ─────────────────────────────────────────────────────────
- * Custom cursor: small dot + trailing ring.
- * - Lerp-based smooth trailing movement
- * - Expands on elements with data-cursor="pointer"
- * - Hidden on touch devices (CSS media query)
- * ─────────────────────────────────────────────────────────
+ * CustomCursor.tsx — Editorial Tech Cursor
+ * Small dot + trailing ring in terracotta accent color
  */
 
 import { useEffect, useState } from "react";
@@ -17,15 +12,13 @@ export function CustomCursor() {
   const [isPointer, setIsPointer] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Raw mouse position
   const rawX = useMotionValue(-100);
   const rawY = useMotionValue(-100);
 
-  // Spring-smoothed positions (different stiffness for dot vs ring)
   const dotX = useSpring(rawX, { stiffness: 800, damping: 50 });
   const dotY = useSpring(rawY, { stiffness: 800, damping: 50 });
-  const ringX = useSpring(rawX, { stiffness: 200, damping: 30 });
-  const ringY = useSpring(rawY, { stiffness: 200, damping: 30 });
+  const ringX = useSpring(rawX, { stiffness: 180, damping: 28 });
+  const ringY = useSpring(rawY, { stiffness: 180, damping: 28 });
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -33,7 +26,6 @@ export function CustomCursor() {
       rawY.set(e.clientY);
       setIsVisible(true);
 
-      // Check if hovering a clickable element
       const target = e.target as HTMLElement;
       const clickable = target.closest(
         'a, button, [role="button"], [data-cursor="pointer"], input, select, textarea, label'
@@ -56,33 +48,33 @@ export function CustomCursor() {
   }, [rawX, rawY]);
 
   return (
-    // Hide on touch devices via CSS (pointer:coarse)
     <div className="pointer-events-none fixed inset-0 z-[9999] hidden [@media(pointer:fine)]:block">
       {/* Trailing ring */}
       <motion.div
         style={{ left: ringX, top: ringY, x: "-50%", y: "-50%" }}
         animate={{
-          width: isPointer ? 48 : 32,
-          height: isPointer ? 48 : 32,
-          opacity: isVisible ? 1 : 0,
-          borderColor: isPointer ? "#B200FF" : "rgba(255,255,255,0.5)",
+          width:  isPointer ? 40 : 28,
+          height: isPointer ? 40 : 28,
+          opacity: isVisible ? (isPointer ? 0.9 : 0.5) : 0,
+          borderColor: isPointer ? "#C8725A" : "rgba(200, 114, 90, 0.4)",
         }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="absolute rounded-full border-2 border-white/50"
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        className="absolute rounded-full border"
       />
       {/* Center dot */}
       <motion.div
         style={{ left: dotX, top: dotY, x: "-50%", y: "-50%" }}
         animate={{
-          width: isPointer ? 6 : 6,
-          height: isPointer ? 6 : 6,
+          width:  isPointer ? 8 : 5,
+          height: isPointer ? 8 : 5,
           opacity: isVisible ? 1 : 0,
-          backgroundColor: isPointer ? "#B200FF" : "white",
-          scale: isPointer ? 1.5 : 1,
+          backgroundColor: "#C8725A",
+          scale: isPointer ? 1.3 : 1,
         }}
         transition={{ duration: 0.1 }}
-        className="absolute rounded-full bg-white"
+        className="absolute rounded-full"
       />
     </div>
   );
 }
+

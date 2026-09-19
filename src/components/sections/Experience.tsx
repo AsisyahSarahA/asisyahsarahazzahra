@@ -1,177 +1,268 @@
 "use client";
 
 /**
- * Experience.tsx
- * ─────────────────────────────────────────────────────────
- * Vertical timeline with neon tube line & detailed bullet points.
- * Cards slide in from alternating sides on scroll.
- * ─────────────────────────────────────────────────────────
+ * Experience.tsx — "A Journey of Learning, Building, and Contributing"
+ * Compact editorial journey · Official BNSP Junior Programmer 2024 Certification
+ * HAKI Intellectual Property · Professional Internships · Education · Awards
+ * Bilingual (ID/EN) · Framer Motion
  */
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { TIMELINE, type TimelineEntry } from "@/data/portfolio";
-import { fadeUp } from "@/lib/utils";
+import { useRef, useState } from "react";
+import Link from "next/link";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
+import { TRANSLATIONS, TIMELINE_I18N, type TimelineEntryI18n } from "@/data/translations";
 
-const TYPE_COLORS: Record<TimelineEntry["type"], string> = {
-  education:    "dark:bg-cyber-violet/20 dark:border-cyber-violet/40 bg-lilac-violet/15 border-lilac-violet/40",
-  work:         "dark:bg-blue-500/20 dark:border-blue-400/40 bg-blue-400/15 border-blue-400/40",
-  organization: "dark:bg-emerald-500/20 dark:border-emerald-400/40 bg-emerald-400/15 border-emerald-400/40",
-  certification:"dark:bg-yellow-500/20 dark:border-yellow-400/40 bg-yellow-400/15 border-yellow-400/40",
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, delay: i * 0.08, ease },
+  }),
 };
 
-const TYPE_DOT_COLORS: Record<TimelineEntry["type"], string> = {
-  education:    "dark:bg-cyber-violet bg-lilac-violet dark:shadow-neon-violet",
-  work:         "bg-blue-500 dark:shadow-[0_0_12px_rgba(59,130,246,0.8)]",
-  organization: "bg-emerald-500 dark:shadow-[0_0_12px_rgba(16,185,129,0.8)]",
-  certification:"bg-yellow-400 dark:shadow-[0_0_12px_rgba(234,179,8,0.8)]",
-};
-
-function TimelineCard({
+function JourneyCard({
   entry,
-  index,
+  showLabel,
+  hideLabel,
 }: {
-  entry: TimelineEntry;
-  index: number;
+  entry: TimelineEntryI18n;
+  showLabel: string;
+  hideLabel: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
-  const isLeft = index % 2 === 0;
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <div ref={ref} className="relative flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-0">
-      {/* Desktop Left card */}
-      <div className={`w-full md:w-[calc(50%-2.5rem)] ${!isLeft ? "md:invisible hidden md:block" : ""}`}>
-        {isLeft && (
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1], delay: 0.1 }}
-            className="md:pr-4"
+    <div
+      className="p-7 sm:p-8 rounded-2xl transition-all hover:shadow-sm"
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+        <div>
+          <div className="flex items-center gap-2.5 mb-2">
+            {entry.badge && (
+              <span
+                className="font-mono text-[0.6875rem] font-bold px-3 py-1 rounded-md uppercase tracking-wider"
+                style={{
+                  background: entry.type === "certification" ? "var(--accent)" : "var(--sage-soft)",
+                  color: entry.type === "certification" ? "#F6F3EE" : "var(--sage)",
+                }}
+              >
+                {entry.badge}
+              </span>
+            )}
+            <span className="font-mono text-[0.75rem]" style={{ color: "var(--text-tertiary)" }}>
+              {entry.period}
+            </span>
+          </div>
+
+          <h4 className="font-serif text-xl sm:text-2xl lg:text-[1.65rem] leading-tight" style={{ color: "var(--text)" }}>
+            {entry.title}
+          </h4>
+        </div>
+
+        {entry.gpa && (
+          <span
+            className="font-mono text-[0.8125rem] font-bold px-3 py-1.5 rounded-lg shrink-0"
+            style={{
+              background: "var(--accent-soft)",
+              color: "var(--accent)",
+              border: "1px solid rgba(200, 117, 93, 0.2)",
+            }}
           >
-            <GlassCard
-              className={`p-6 border ${TYPE_COLORS[entry.type]}`}
-              hoverable={false}
-              intensity="md"
-            >
-              <EntryContent entry={entry} />
-            </GlassCard>
-          </motion.div>
+            IPK {entry.gpa}
+          </span>
         )}
       </div>
 
-      {/* Center dot */}
-      <div className="relative z-10 flex items-center justify-center md:w-20 shrink-0">
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={isInView ? { scale: 1, opacity: 1 } : {}}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className={`w-10 h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-lg ${TYPE_DOT_COLORS[entry.type]}`}
+      <p className="font-sans text-[0.875rem] font-medium mb-3.5" style={{ color: "var(--accent)" }}>
+        {entry.organization} {entry.location && `· ${entry.location}`}
+      </p>
+
+      <p className="font-sans text-[0.9375rem] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+        {entry.description}
+      </p>
+
+      {/* Expandable Bullet Details */}
+      <AnimatePresence>
+        {expanded && entry.bullets && (
+          <motion.ul
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease }}
+            className="mt-5 pt-5 border-t space-y-2.5 overflow-hidden"
+            style={{ borderColor: "var(--border)" }}
+          >
+            {entry.bullets.map((bullet, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--accent)" }} />
+                <span className="font-sans text-[0.875rem] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  {bullet}
+                </span>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+
+      {entry.bullets && entry.bullets.length > 0 && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-4 font-sans text-[0.8125rem] font-medium link-reveal transition-colors"
+          style={{ color: "var(--accent)" }}
         >
-          <span>{entry.icon}</span>
-        </motion.div>
-      </div>
-
-      {/* Desktop Right card */}
-      <div className={`w-full md:w-[calc(50%-2.5rem)] ${isLeft ? "md:invisible hidden md:block" : ""}`}>
-        {!isLeft && (
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1], delay: 0.1 }}
-            className="md:pl-4"
-          >
-            <GlassCard
-              className={`p-6 border ${TYPE_COLORS[entry.type]}`}
-              hoverable={false}
-              intensity="md"
-            >
-              <EntryContent entry={entry} />
-            </GlassCard>
-          </motion.div>
-        )}
-      </div>
+          {expanded ? hideLabel : showLabel}
+        </button>
+      )}
     </div>
   );
 }
 
-function EntryContent({ entry }: { entry: TimelineEntry }) {
-  return (
-    <>
-      <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
-        <h3 className="font-heading font-bold text-base sm:text-lg dark:text-white text-gray-900 leading-tight">
-          {entry.title}
-        </h3>
-        <span className="font-mono text-xs px-2.5 py-0.5 rounded-full dark:bg-white/10 bg-black/5 dark:text-cyber-cyan text-lilac-violet font-medium">
-          {entry.period}
-        </span>
-      </div>
-      <p className="font-body text-xs sm:text-sm font-semibold dark:text-cyber-cyan text-lilac-violet mb-3">
-        {entry.organization}
-      </p>
-      <p className="font-body text-xs sm:text-sm dark:text-white/70 text-gray-600 leading-relaxed mb-3">
-        {entry.description}
-      </p>
-
-      {/* Bullets if present */}
-      {entry.bullets && entry.bullets.length > 0 && (
-        <ul className="space-y-1.5 pt-2 border-t dark:border-white/10 border-black/10">
-          {entry.bullets.map((bullet, i) => (
-            <li key={i} className="flex items-start gap-2 font-body text-xs dark:text-white/60 text-gray-600">
-              <span className="dark:text-cyber-violet text-lilac-violet font-bold">•</span>
-              <span>{bullet}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
-}
-
 export function Experience() {
-  const headerRef = useRef<HTMLDivElement>(null);
-  const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-10%" });
+
+  const { locale } = useLanguage();
+  const t = TRANSLATIONS[locale].experience;
+  const entries = TIMELINE_I18N[locale];
+
+  const certEntries = entries.filter((e) => e.type === "certification");
+  const workEntries = entries.filter((e) => e.type === "work");
+  const orgEntries = entries.filter((e) => e.type === "organization");
+  const eduEntries = entries.filter((e) => e.type === "education");
+  const awardEntries = entries.filter((e) => e.type === "award");
+
+  const groups = [
+    { key: "certification", label: t.sections.certification, items: certEntries },
+    { key: "work",          label: t.sections.work,          items: workEntries },
+    { key: "organization",  label: t.sections.organization,  items: orgEntries },
+    { key: "education",     label: t.sections.education,     items: eduEntries },
+    { key: "award",         label: t.sections.award,         items: awardEntries },
+  ];
 
   return (
-    <section id="experience" className="py-24 px-4 relative overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-32 w-px h-full dark:bg-cyber-violet/10 bg-lilac-violet/10 blur-xl" />
-
-      <div className="max-w-5xl mx-auto">
+    <section ref={ref} id="experience" className="py-20 lg:py-28">
+      <div className="container-editorial">
         {/* Section Header */}
-        <motion.div
-          ref={headerRef}
-          variants={fadeUp}
-          initial="hidden"
-          animate={isHeaderInView ? "visible" : "hidden"}
-          className="text-center mb-16"
-        >
-          <span className="font-mono text-sm dark:text-cyber-cyan text-lilac-violet tracking-widest uppercase">
-            — Rekam Jejak & Pengalaman —
-          </span>
-          <h2 className="font-heading text-3xl sm:text-5xl font-bold mt-3 dark:text-white text-gray-900">
-            Experience & Education
-          </h2>
-          <p className="font-body dark:text-white/50 text-gray-500 mt-3 max-w-md mx-auto text-sm">
-            Perjalanan akademik, sertifikasi teknis, serta keorganisasian.
-          </p>
-        </motion.div>
+        <div className="max-w-2xl mb-14">
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="label-meta mb-3"
+          >
+            {t.label}
+          </motion.p>
 
-        {/* Timeline Container */}
-        <div className="relative">
-          {/* Neon Tube Center Line (Desktop) */}
-          <div className="hidden md:block absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-px">
-            <div className="w-full h-full dark:bg-gradient-to-b dark:from-cyber-violet dark:via-cyber-cyan dark:to-cyber-violet bg-gradient-to-b from-lilac-violet via-purple-300 to-lilac-violet opacity-60" />
-            <div className="absolute inset-0 w-[3px] -left-[1px] dark:bg-cyber-violet/50 opacity-0 dark:opacity-100 blur-[2px]" />
-          </div>
+          <motion.h2
+            variants={fadeUp}
+            custom={1}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="font-serif text-3xl sm:text-4xl lg:text-5xl mb-4 tracking-tight"
+            style={{ color: "var(--text)" }}
+          >
+            {t.headingLead}{" "}
+            <em className="italic" style={{ color: "var(--accent)" }}>
+              {t.headingAccent}
+            </em>
+          </motion.h2>
 
-          {/* Timeline Entries */}
-          <div className="space-y-10">
-            {TIMELINE.map((entry, index) => (
-              <TimelineCard key={entry.id} entry={entry} index={index} />
-            ))}
-          </div>
+          <motion.p
+            variants={fadeUp}
+            custom={2}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="font-sans text-[0.9375rem] leading-relaxed"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Rekam jejak pembelajaran terstruktur, sertifikasi nasional BNSP, kontribusi dalam pelayanan publik dan organisasi kampus, serta penghargaan prestasi di Jawa Barat.
+          </motion.p>
+        </div>
+
+        {/* ── Journey Groups ─────────────────────────────────── */}
+        <div className="space-y-14">
+          {groups.map((group, gIdx) => (
+            <motion.div
+              key={group.key}
+              variants={fadeUp}
+              custom={gIdx + 2}
+              initial="hidden"
+              animate={inView ? "visible" : "hidden"}
+            >
+              {/* Category Header */}
+              <div className="flex items-center gap-3.5 mb-6 pb-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--accent)" }} />
+                <h3 className="font-mono text-[0.875rem] font-bold uppercase tracking-wider" style={{ color: "var(--text)" }}>
+                  {group.label}
+                </h3>
+                <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                <span className="font-mono text-[0.75rem]" style={{ color: "var(--text-tertiary)" }}>
+                  0{gIdx + 1}
+                </span>
+              </div>
+
+              {/* Items Grid */}
+              <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+                {group.items.map((entry) => (
+                  <JourneyCard
+                    key={entry.id}
+                    entry={entry}
+                    showLabel={t.showDetail}
+                    hideLabel={t.hideDetail}
+                  />
+                ))}
+              </div>
+
+              {/* Callout to Dedicated Certificates Page */}
+              {group.key === "certification" && (
+                <div
+                  className="mt-6 p-6 sm:p-7 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  style={{
+                    background: "var(--surface-alt)",
+                    borderColor: "var(--border)",
+                  }}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className="font-mono text-[0.6875rem] font-bold px-2.5 py-0.5 rounded uppercase"
+                        style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+                      >
+                        {locale === "id" ? "Arsip Lengkap" : "Full Archive"}
+                      </span>
+                      <span className="font-mono text-xs text-secondary">
+                        {locale === "id" ? "11 Dokumen Terverifikasi" : "11 Verified Documents"}
+                      </span>
+                    </div>
+                    <h4 className="font-serif text-lg sm:text-xl font-bold" style={{ color: "var(--text)" }}>
+                      {locale === "id" ? "Galeri Sertifikat, Lisensi & KHS Lengkap" : "All Certificates, Licenses & Official Transcripts"}
+                    </h4>
+                    {/* <p className="font-sans text-xs sm:text-[0.8125rem] leading-relaxed mt-1" style={{ color: "var(--text-secondary)" }}>
+                      {locale === "id"
+                        ? "Buka seluruh sertifikat pelatihan soft skills, kejuruan, magang di Disdukcapil, organisasi kampus, dan transkrip nilai IPK 3.93 dalam penampil interaktif."
+                        : "Browse all soft skills, technical, Disdukcapil internship, student leadership credentials, and 3.93 GPA academic transcripts in the interactive viewer."}
+                    </p> */}
+                  </div>
+                  <Link
+                    href="/sertifikat"
+                    className="btn-primary text-xs py-2.5 px-5 shrink-0 inline-flex items-center gap-2"
+                  >
+                    <span>{locale === "id" ? "Buka Halaman Sertifikat" : "Explore Certificates"}</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              )}
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

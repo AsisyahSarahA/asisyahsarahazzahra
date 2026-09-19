@@ -1,141 +1,181 @@
 "use client";
 
 /**
- * Skills.tsx
- * ─────────────────────────────────────────────────────────
- * Bento Grid of skill categories with physical token chips & proficiency badges.
- * ─────────────────────────────────────────────────────────
+ * Skills.tsx — "The Craft, Not a Skill Bar"
+ * Clean categorized technical profile · No fake percentages · No dot ratings
+ * Interactive shelf / contextual tool inspector · Bilingual (ID/EN)
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { SKILLS } from "@/data/portfolio";
-import { fadeUp, staggerContainer, shardIn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
+import { TRANSLATIONS } from "@/data/translations";
+import { SKILL_CATEGORIES } from "@/data/portfolio";
 
-const CATEGORY_STYLES = [
-  {
-    bg: "dark:from-cyber-violet/20 from-lilac-violet/10 to-transparent",
-    chip: "dark:bg-cyber-violet/15 dark:border-cyber-violet/30 dark:text-cyber-cyan bg-lilac-violet/10 border-lilac-violet/30 text-lilac-violet",
-    accent: "dark:text-cyber-violet text-lilac-violet",
-    glow: "hover:shadow-neon-violet",
-  },
-  {
-    bg: "dark:from-blue-500/20 from-blue-400/10 to-transparent",
-    chip: "dark:bg-blue-500/15 dark:border-blue-400/30 dark:text-blue-300 bg-blue-400/10 border-blue-400/30 text-blue-600",
-    accent: "dark:text-blue-400 text-blue-600",
-    glow: "hover:shadow-[0_0_16px_rgba(59,130,246,0.4)]",
-  },
-  {
-    bg: "dark:from-emerald-500/20 from-emerald-400/10 to-transparent",
-    chip: "dark:bg-emerald-500/15 dark:border-emerald-400/30 dark:text-emerald-300 bg-emerald-400/10 border-emerald-400/30 text-emerald-600",
-    accent: "dark:text-emerald-400 text-emerald-600",
-    glow: "hover:shadow-[0_0_16px_rgba(16,185,129,0.4)]",
-  },
-];
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, delay: i * 0.08, ease },
+  }),
+};
 
 export function Skills() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-12%" });
+  const [activeTab, setActiveTab] = useState<number>(0);
+
+  const { locale } = useLanguage();
+  const t = TRANSLATIONS[locale].skills;
 
   return (
-    <section id="skills" ref={ref} className="py-24 px-4 relative overflow-hidden">
-      {/* Ambient Glow */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 dark:bg-cyber-cyan/5 bg-lilac-lavender/30 rounded-full blur-3xl" />
-
-      <div className="max-w-6xl mx-auto">
+    <section
+      ref={ref}
+      id="skills"
+      className="py-20 lg:py-28"
+      style={{ background: "var(--bg-alt)" }}
+    >
+      <div className="container-editorial">
         {/* Section Header */}
+        <div className="max-w-2xl mb-12">
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="label-meta mb-3"
+          >
+            {t.label}
+          </motion.p>
+
+          <motion.h2
+            variants={fadeUp}
+            custom={1}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="font-serif text-3xl sm:text-4xl lg:text-5xl mb-4 tracking-tight"
+            style={{ color: "var(--text)" }}
+          >
+            {t.headingLead}{" "}
+            <em className="italic" style={{ color: "var(--accent)" }}>
+              {t.headingAccent}
+            </em>
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            custom={2}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="font-sans text-[0.9375rem] leading-relaxed"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {t.description}
+          </motion.p>
+        </div>
+
+        {/* ── Category Selector Tabs ─────────────────────────── */}
         <motion.div
           variants={fadeUp}
+          custom={3}
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
-          className="text-center mb-16"
+          animate={inView ? "visible" : "hidden"}
+          className="flex flex-wrap gap-3 mb-10 border-b pb-5"
+          style={{ borderColor: "var(--border)" }}
         >
-          <span className="font-mono text-sm dark:text-cyber-cyan text-lilac-violet tracking-widest uppercase">
-            — Keahlian & Spesialisasi —
-          </span>
-          <h2 className="font-heading text-3xl sm:text-5xl font-bold mt-3 dark:text-white text-gray-900">
-            Skills & Expertise
-          </h2>
-          <p className="font-body dark:text-white/50 text-gray-500 mt-3 max-w-md mx-auto text-sm sm:text-base">
-            Perangkat lunak, bahasa pemrograman, dan kompetensi teknis yang dikuasai.
-          </p>
+          {SKILL_CATEGORIES.map((cat, idx) => (
+            <button
+              key={cat.key}
+              onClick={() => setActiveTab(idx)}
+              className="px-5 py-2.5 rounded-xl font-mono text-[0.8125rem] font-medium transition-all"
+              style={{
+                background: activeTab === idx ? "var(--surface)" : "transparent",
+                color: activeTab === idx ? "var(--accent)" : "var(--text-secondary)",
+                border: "1px solid",
+                borderColor: activeTab === idx ? "var(--accent)" : "var(--border)",
+                boxShadow: activeTab === idx ? "var(--shadow-sm)" : "none",
+              }}
+            >
+              {t.categories[idx] || cat.label}
+            </button>
+          ))}
         </motion.div>
 
-        {/* Bento Grid */}
+        {/* ── Active Category Skills View ────────────────────── */}
         <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease }}
+          className="p-8 sm:p-12 rounded-2xl"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            boxShadow: "var(--shadow-md)",
+          }}
         >
-          {SKILLS.map((category, catIdx) => {
-            const styles = CATEGORY_STYLES[catIdx % CATEGORY_STYLES.length];
-            return (
-              <motion.div key={category.label} variants={shardIn}>
-                <GlassCard
-                  className={`p-6 sm:p-7 h-full flex flex-col justify-between bg-gradient-to-br ${styles.bg}`}
-                  glowClass={styles.glow}
-                  intensity="md"
-                >
-                  <div>
-                    {/* Category Header */}
-                    <div className="flex items-center gap-3 mb-6 pb-4 border-b dark:border-white/10 border-black/10">
-                      <span className="text-3xl">{category.emoji}</span>
-                      <div>
-                        <h3 className={`font-heading font-bold text-lg sm:text-xl ${styles.accent}`}>
-                          {category.label}
-                        </h3>
-                        <p className="font-mono text-xs dark:text-white/40 text-gray-500">
-                          {category.skills.length} Komponen Terverifikasi
-                        </p>
-                      </div>
-                    </div>
+          <div className="max-w-xl mb-9">
+            <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl mb-3" style={{ color: "var(--text)" }}>
+              {t.categories[activeTab] || SKILL_CATEGORIES[activeTab].label}
+            </h3>
+            <p className="font-sans text-[0.9375rem] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              {SKILL_CATEGORIES[activeTab].description}
+            </p>
+          </div>
 
-                    {/* Skill Token Chips */}
-                    <div className="flex flex-wrap gap-2.5">
-                      {category.skills.map((skill, i) => (
-                        <motion.div
-                          key={skill.name}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                          transition={{ delay: catIdx * 0.1 + i * 0.05 + 0.3, duration: 0.3 }}
-                          whileHover={{
-                            y: -3,
-                            scale: 1.04,
-                            transition: { type: "spring", stiffness: 400 },
-                          }}
-                          className={`
-                            relative group flex items-center gap-2 px-3.5 py-2 rounded-full
-                            border cursor-default
-                            font-mono text-xs font-medium
-                            backdrop-blur-sm
-                            shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.2)]
-                            transition-all duration-200
-                            ${styles.chip}
-                          `}
-                        >
-                          <span className="text-base">{skill.icon}</span>
-                          <span>{skill.name}</span>
+          {/* Skill items chips */}
+          <div className="flex flex-wrap gap-3.5">
+            {SKILL_CATEGORIES[activeTab].skills.map((skill) => (
+              <div
+                key={skill}
+                className="px-5 py-3 rounded-xl flex items-center gap-3 transition-all hover:scale-[1.02]"
+                style={{
+                  background: "var(--surface-alt)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <span className="w-2 h-2 rounded-full" style={{ background: "var(--accent)" }} />
+                <span className="font-sans text-[0.9375rem] font-medium" style={{ color: "var(--text)" }}>
+                  {skill}
+                </span>
+              </div>
+            ))}
+          </div>
 
-                          {/* Level Badge Tooltip on Hover */}
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[9px] px-1.5 py-0.5 rounded-full dark:bg-black/60 bg-white/80 dark:text-white text-gray-800 border border-white/20">
-                            {skill.level}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t dark:border-white/5 border-black/5 flex items-center justify-between font-mono text-[10px] dark:text-white/30 text-gray-400">
-                    <span>Verified Skill Set</span>
-                    <span>100% Practical</span>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            );
-          })}
+          <div className="mt-10 pt-6 border-t flex flex-wrap items-center justify-between gap-2 font-mono text-[0.75rem]" style={{ borderColor: "var(--border)", color: "var(--text-tertiary)" }}>
+            <span>{t.note}</span>
+            <span className="text-accent font-semibold px-2.5 py-1 rounded" style={{ background: "var(--accent-soft)" }}>
+              Standardized Tools
+            </span>
+          </div>
         </motion.div>
+
+        {/* Overview across all domains */}
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {SKILL_CATEGORIES.map((cat, idx) => (
+            <div
+              key={cat.key}
+              onClick={() => setActiveTab(idx)}
+              className="p-6 sm:p-7 rounded-2xl cursor-pointer transition-all hover:border-accent hover:shadow-sm"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid",
+                borderColor: activeTab === idx ? "var(--accent)" : "var(--border)",
+              }}
+            >
+              <p className="label-meta text-[0.625rem] mb-2">{t.categories[idx]}</p>
+              <p className="font-serif text-xl mb-2.5" style={{ color: "var(--text)" }}>
+                {cat.skills.length} Tools & Topics
+              </p>
+              <p className="font-sans text-[0.8125rem] leading-relaxed line-clamp-2" style={{ color: "var(--text-secondary)" }}>
+                {cat.skills.slice(0, 4).join(", ")}...
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

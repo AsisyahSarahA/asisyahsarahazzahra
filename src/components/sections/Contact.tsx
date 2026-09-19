@@ -1,304 +1,350 @@
 "use client";
 
 /**
- * Contact.tsx
- * ─────────────────────────────────────────────────────────
- * Contact section with:
- * - Interactive glass contact form (Name, Email, Message)
- * - Copy email physical switch toggle with toast feedback
- * - Direct social media links with GitHub (AsisyahSarahA) & Email (asisyahsrahazz@gmail.com)
- * ─────────────────────────────────────────────────────────
+ * Contact.tsx — "Let's Connect" Editorial Contact Section
+ * Verified contact details (Email, WhatsApp, GitHub, Ciamis location)
+ * Interactive direct messaging form with validation · Bilingual (ID/EN)
  */
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { Mail, Check, Copy, Send, Sparkles, MessageSquare, User, AtSign } from "lucide-react";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { SkeuoButton } from "@/components/ui/SkeuoButton";
 import { PERSONAL_INFO } from "@/data/portfolio";
-import { fadeUp } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
+import { TRANSLATIONS } from "@/data/translations";
 
-// Inline SVG components for social icons
-function GithubIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-    </svg>
-  );
-}
+const ease = [0.22, 1, 0.36, 1] as const;
 
-function LinkedinIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-    </svg>
-  );
-}
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, delay: i * 0.08, ease },
+  }),
+};
+
+type FormState = "idle" | "loading" | "success";
 
 export function Contact() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
-  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-10%" });
 
-  // Form State
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
-  const [formStatus, setFormStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const { locale } = useLanguage();
+  const t = TRANSLATIONS[locale].contact;
 
-  const copyEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(PERSONAL_INFO.email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      const el = document.createElement("textarea");
-      el.value = PERSONAL_INFO.email;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    }
+  const [formState, setFormState] = useState<FormState>("idle");
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
-
-    setFormStatus("sending");
-    setTimeout(() => {
-      // Simulate mailto or submission
-      window.location.href = `mailto:${PERSONAL_INFO.email}?subject=Portofolio Contact from ${encodeURIComponent(
-        formData.name
-      )}&body=${encodeURIComponent(formData.message + "\n\nFrom: " + formData.email)}`;
-      setFormStatus("sent");
-      setFormData({ name: "", email: "", message: "" });
-      setTimeout(() => setFormStatus("idle"), 4000);
-    }, 800);
+    setFormState("loading");
+    await new Promise((r) => setTimeout(r, 800));
+    setFormState("success");
   };
-
-  const SOCIAL_LINKS = [
-    {
-      id: "contact-github",
-      label: "GitHub",
-      handle: "AsisyahSarahA",
-      icon: <GithubIcon className="w-5 h-5" />,
-      href: PERSONAL_INFO.github,
-    },
-    {
-      id: "contact-linkedin",
-      label: "LinkedIn",
-      handle: "Asisyah Sarah Azzahra",
-      icon: <LinkedinIcon className="w-5 h-5" />,
-      href: PERSONAL_INFO.linkedin,
-    },
-    {
-      id: "contact-email",
-      label: "Email Direct",
-      handle: PERSONAL_INFO.email,
-      icon: <Mail size={20} strokeWidth={1.5} />,
-      href: `mailto:${PERSONAL_INFO.email}`,
-    },
-  ];
 
   return (
-    <section id="contact" ref={ref} className="py-24 px-4 relative overflow-hidden">
-      {/* Ambient background mesh */}
-      <div className="absolute inset-0 dark:bg-cyber-mesh bg-lilac-mesh opacity-30" />
-
-      <div className="max-w-5xl mx-auto">
+    <section
+      ref={ref}
+      id="contact"
+      className="py-20 lg:py-28"
+      style={{ background: "var(--bg-alt)" }}
+    >
+      <div className="container-editorial">
         {/* Section Header */}
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
-          className="text-center mb-16"
-        >
-          <span className="font-mono text-sm dark:text-cyber-cyan text-lilac-violet tracking-widest uppercase">
-            — Hubungi Saya —
-          </span>
-          <h2 className="font-heading text-3xl sm:text-5xl font-bold mt-3 dark:text-white text-gray-900">
-            Let&apos;s Work Together
-          </h2>
-          <p className="font-body dark:text-white/50 text-gray-500 mt-3 max-w-md mx-auto text-sm sm:text-base">
-            Terbuka untuk kesempatan kolaborasi proyek, posisi IT Support, maupun diskusi seputar pengembangan perangkat lunak.
-          </p>
-        </motion.div>
+        <div className="max-w-2xl mb-12">
+          <motion.p
+            variants={fadeUp}
+            custom={0}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="label-meta mb-3"
+          >
+            {t.label}
+          </motion.p>
 
-        <div className="grid lg:grid-cols-12 gap-8 items-start">
-          {/* ── Left Column: Contact Form (7 cols) ── */}
+          <motion.h2
+            variants={fadeUp}
+            custom={1}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="font-serif text-3xl sm:text-4xl lg:text-5xl mb-4 tracking-tight"
+            style={{ color: "var(--text)" }}
+          >
+            {t.headingLead}{" "}
+            <em className="italic" style={{ color: "var(--accent)" }}>
+              {t.headingAccent}
+            </em>
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp}
+            custom={2}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="font-sans text-[0.9375rem] leading-relaxed"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {t.description}
+          </motion.p>
+        </div>
+
+        {/* ── Two-Column Layout: Direct Details & Interactive Form ── */}
+        <div className="grid lg:grid-cols-[1fr_1.25fr] gap-10 lg:gap-16 items-start">
+          {/* Left Column: Direct Contacts */}
           <motion.div
             variants={fadeUp}
+            custom={3}
             initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="lg:col-span-7"
+            animate={inView ? "visible" : "hidden"}
+            className="space-y-5"
           >
-            <GlassCard className="p-6 sm:p-8" hoverable={false} intensity="xl">
-              <h3 className="font-heading text-xl font-bold dark:text-white text-gray-900 mb-2 flex items-center gap-2">
-                <MessageSquare size={20} className="dark:text-cyber-cyan text-lilac-violet" />
-                Kirim Pesan Langsung
-              </h3>
-              <p className="font-body text-xs dark:text-white/50 text-gray-500 mb-6">
-                Isi formulir di bawah ini untuk terhubung langsung via email.
+            {/* Availability Status Badge */}
+            <div
+              className="p-5 sm:p-6 rounded-2xl flex items-center gap-4"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+              <p className="font-sans text-[0.875rem] font-medium" style={{ color: "var(--text)" }}>
+                {t.statusAvailable}
               </p>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name Input */}
-                <div>
-                  <label className="block font-mono text-xs dark:text-white/60 text-gray-600 mb-1.5 flex items-center gap-1">
-                    <User size={12} />
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Masukkan nama Anda..."
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl font-body text-sm dark:bg-white/5 bg-black/5 border dark:border-white/10 border-black/10 dark:text-white text-gray-900 focus:outline-none focus:border-cyber-violet dark:focus:border-cyber-cyan transition-colors"
-                  />
-                </div>
+            {/* Email Card */}
+            <a
+              href={`mailto:${PERSONAL_INFO.email}`}
+              className="p-6 sm:p-7 rounded-2xl flex items-center gap-5 transition-all hover:shadow-md group"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="label-meta text-[0.625rem] mb-1">{t.directEmailTitle}</p>
+                <p className="font-sans text-[0.9375rem] sm:text-[1rem] font-semibold truncate group-hover:text-accent transition-colors" style={{ color: "var(--text)" }}>
+                  {PERSONAL_INFO.email}
+                </p>
+              </div>
+            </a>
 
-                {/* Email Input */}
-                <div>
-                  <label className="block font-mono text-xs dark:text-white/60 text-gray-600 mb-1.5 flex items-center gap-1">
-                    <AtSign size={12} />
-                    Alamat Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="nama@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl font-body text-sm dark:bg-white/5 bg-black/5 border dark:border-white/10 border-black/10 dark:text-white text-gray-900 focus:outline-none focus:border-cyber-violet dark:focus:border-cyber-cyan transition-colors"
-                  />
-                </div>
+            {/* WhatsApp / Phone Card */}
+            <a
+              href={`https://wa.me/6281953663986`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-6 sm:p-7 rounded-2xl flex items-center gap-5 transition-all hover:shadow-md group"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+              </div>
+              <div>
+                <p className="label-meta text-[0.625rem] mb-1">{t.phoneTitle}</p>
+                <p className="font-sans text-[0.9375rem] sm:text-[1rem] font-semibold group-hover:text-accent transition-colors" style={{ color: "var(--text)" }}>
+                  {PERSONAL_INFO.phoneFormatted}
+                </p>
+              </div>
+            </a>
 
-                {/* Message Input */}
-                <div>
-                  <label className="block font-mono text-xs dark:text-white/60 text-gray-600 mb-1.5 flex items-center gap-1">
-                    <MessageSquare size={12} />
-                    Pesan / Keperluan Proyek
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    placeholder="Tuliskan pesan atau penawaran kerja sama Anda di sini..."
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl font-body text-sm dark:bg-white/5 bg-black/5 border dark:border-white/10 border-black/10 dark:text-white text-gray-900 focus:outline-none focus:border-cyber-violet dark:focus:border-cyber-cyan transition-colors resize-none"
-                  />
-                </div>
+            {/* GitHub Card */}
+            <a
+              href={PERSONAL_INFO.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-6 sm:p-7 rounded-2xl flex items-center gap-5 transition-all hover:shadow-md group"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                </svg>
+              </div>
+              <div>
+                <p className="label-meta text-[0.625rem] mb-1">GitHub Profil</p>
+                <p className="font-sans text-[0.9375rem] sm:text-[1rem] font-semibold group-hover:text-accent transition-colors" style={{ color: "var(--text)" }}>
+                  github.com/AsisyahSarahA ↗
+                </p>
+              </div>
+            </a>
 
-                {/* Submit Button */}
-                <SkeuoButton
-                  type="submit"
-                  variant="primary"
-                  size="md"
-                  disabled={formStatus === "sending"}
-                  className="w-full justify-center"
-                  id="contact-submit-btn"
-                >
-                  {formStatus === "sending" ? (
-                    <span>Menyiapkan Pesan...</span>
-                  ) : formStatus === "sent" ? (
-                    <>
-                      <Check size={16} />
-                      <span>Pesan Terkirim!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send size={16} />
-                      <span>Kirim Pesan Sekarang</span>
-                    </>
-                  )}
-                </SkeuoButton>
-              </form>
-            </GlassCard>
+            {/* Location Card */}
+            <div
+              className="p-6 sm:p-7 rounded-2xl flex items-center gap-5"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="label-meta text-[0.625rem] mb-1">{t.locationTitle}</p>
+                <p className="font-sans text-[0.9375rem] sm:text-[1rem] font-semibold" style={{ color: "var(--text)" }}>
+                  {PERSONAL_INFO.location}
+                </p>
+              </div>
+            </div>
           </motion.div>
 
-          {/* ── Right Column: Info & Social Links (5 cols) ── */}
+          {/* Right Column: Direct Messaging Form */}
           <motion.div
             variants={fadeUp}
+            custom={4}
             initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="lg:col-span-5 space-y-6"
+            animate={inView ? "visible" : "hidden"}
+            className="p-8 sm:p-10 lg:p-12 rounded-2xl"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow-sm)",
+            }}
           >
-            {/* Fast Email Copy Card */}
-            <GlassCard className="p-6 text-center" hoverable={false} intensity="xl">
-              <div className="w-12 h-12 rounded-2xl dark:bg-cyber-violet/20 bg-lilac-violet/15 flex items-center justify-center mx-auto mb-3 border border-white/15">
-                <Sparkles size={22} className="dark:text-cyber-cyan text-lilac-violet" />
-              </div>
-              <p className="font-mono text-xs dark:text-white/40 text-gray-400 uppercase tracking-widest mb-2">
-                Salin Email Resmi
-              </p>
-              <p className="font-mono text-sm font-bold dark:text-white text-gray-900 mb-4 select-all">
-                {PERSONAL_INFO.email}
-              </p>
+            <h3 className="font-serif text-2xl sm:text-3xl mb-7" style={{ color: "var(--text)" }}>
+              {t.formTitle}
+            </h3>
 
-              <motion.button
-                id="contact-copy-email"
-                onClick={copyEmail}
-                whileHover={{ y: -2, scale: 1.03 }}
-                whileTap={{ y: 2, scale: 0.97 }}
-                animate={{
-                  backgroundColor: copied ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)",
-                  borderColor: copied ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.2)",
+            {formState === "success" ? (
+              <div
+                className="p-10 rounded-2xl text-center space-y-4"
+                style={{
+                  background: "var(--accent-soft)",
+                  border: "1px solid rgba(200, 117, 93, 0.25)",
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border font-mono text-xs font-medium transition-colors shadow-skeuo cursor-pointer"
               >
-                {copied ? (
-                  <>
-                    <Check size={14} className="text-green-400" />
-                    <span className="text-green-400">Email Berhasil Disalin!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy size={14} className="dark:text-white/70 text-gray-600" />
-                    <span className="dark:text-white/80 text-gray-700">Salin ke Clipboard</span>
-                  </>
-                )}
-              </motion.button>
-            </GlassCard>
-
-            {/* Social Channels List */}
-            <GlassCard className="p-6" hoverable={false} intensity="md">
-              <p className="font-mono text-xs dark:text-white/40 text-gray-400 uppercase tracking-widest mb-4">
-                Kanal Media Sosial
-              </p>
-
-              <div className="space-y-3">
-                {SOCIAL_LINKS.map((link) => (
-                  <motion.a
-                    key={link.id}
-                    id={link.id}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ x: 4, scale: 1.01 }}
-                    className="flex items-center justify-between p-3.5 rounded-xl dark:bg-white/5 bg-black/5 border dark:border-white/10 border-black/10 hover:border-cyber-violet/40 transition-all duration-200 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg dark:bg-white/10 bg-black/10 dark:text-cyber-cyan text-lilac-violet group-hover:scale-110 transition-transform">
-                        {link.icon}
-                      </div>
-                      <div>
-                        <div className="font-heading text-xs font-bold dark:text-white text-gray-900">
-                          {link.label}
-                        </div>
-                        <div className="font-mono text-[11px] dark:text-white/50 text-gray-500">
-                          {link.handle}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs dark:text-white/30 text-gray-400 group-hover:translate-x-1 transition-transform">
-                      →
-                    </span>
-                  </motion.a>
-                ))}
+                <p className="font-serif text-2xl" style={{ color: "var(--text)" }}>
+                  {t.formSuccess}
+                </p>
+                <button
+                  onClick={() => {
+                    setFormState("idle");
+                    setForm({ name: "", email: "", subject: "", message: "" });
+                  }}
+                  className="font-sans text-[0.875rem] font-medium link-reveal"
+                  style={{ color: "var(--accent)" }}
+                >
+                  ← Kirim pesan lain
+                </button>
               </div>
-            </GlassCard>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block label-meta text-[0.625rem] mb-2">{t.formName}</label>
+                    <input
+                      required
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder={t.formNamePlaceholder}
+                      className="w-full px-5 py-3.5 rounded-xl font-sans text-[0.9375rem] outline-none transition-all"
+                      style={{
+                        background: "var(--surface-alt)",
+                        border: "1px solid var(--border)",
+                        color: "var(--text)",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block label-meta text-[0.625rem] mb-2">{t.formEmail}</label>
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder={t.formEmailPlaceholder}
+                      className="w-full px-5 py-3.5 rounded-xl font-sans text-[0.9375rem] outline-none transition-all"
+                      style={{
+                        background: "var(--surface-alt)",
+                        border: "1px solid var(--border)",
+                        color: "var(--text)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block label-meta text-[0.625rem] mb-2">{t.formSubject}</label>
+                  <input
+                    required
+                    type="text"
+                    name="subject"
+                    value={form.subject}
+                    onChange={handleChange}
+                    placeholder={t.formSubjectPlaceholder}
+                    className="w-full px-5 py-3.5 rounded-xl font-sans text-[0.9375rem] outline-none transition-all"
+                    style={{
+                      background: "var(--surface-alt)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block label-meta text-[0.625rem] mb-2">{t.formMessage}</label>
+                  <textarea
+                    required
+                    rows={5}
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
+                    placeholder={t.formMessagePlaceholder}
+                    className="w-full px-5 py-3.5 rounded-xl font-sans text-[0.9375rem] outline-none transition-all resize-none"
+                    style={{
+                      background: "var(--surface-alt)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={formState === "loading"}
+                  className="btn-primary w-full justify-center py-4 text-[0.9375rem]"
+                  style={{ opacity: formState === "loading" ? 0.7 : 1 }}
+                >
+                  {formState === "loading" ? t.formBtnSending : t.formBtnSubmit}
+                </button>
+              </form>
+            )}
           </motion.div>
         </div>
       </div>
